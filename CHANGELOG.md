@@ -4,6 +4,7 @@
 * **BREAKING**: Requires Flutter 3.41.0 or later
 * **NEW**: `gestureBlockingPolicy` on `AdaptiveBottomNavigationBar`. `doNotBlockGesture` fixes short taps that the iOS 26 tab bar missed; the default is unchanged
 * **NEW**: `menuItems` and `onMenuItemSelected` on `AdaptiveAppBarAction`. Tapping the action opens a menu instead of calling `onPressed`, like the "more" button of a system app. On iOS 26+ it is a native `UIMenu` shown at the bar button, in the fixed toolbar as well; on iOS <26 an action sheet; on Android a popup menu at the button. Takes the `AdaptivePopupMenuItem` and `AdaptivePopupMenuDivider` entries of `AdaptivePopupMenuButton`. On iPhone Duo the menu opens from the action's glass capsule; an action that moved into the overflow menu opens it as an action sheet. `onPressed` is now optional for an action with a menu
+* **FIX**: Dragging back from a page pushed over a tab layout built on an `IndexedStack` showed the bar of the last mounted tab (e.g. its title) instead of the selected one. Tabs hidden in place are now skipped when the fixed toolbar looks for the page underneath
 
 ## [1.0.1]
 * **FIX**: 📱 **iPhone Duo: the tab bar now lives in the vertical bar**, at the bottom of it, the way the system lays it out. In 1.0.0 it stayed at the bottom of the screen. The strip now reads, from the top: status cluster, back button, toolbar items, tab bar. Measured against a native UIKit app on the iPhone Duo simulator
