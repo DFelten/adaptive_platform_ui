@@ -198,6 +198,10 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   /// [AdaptiveToolbarHost] is installed above the navigator.
   ToolbarRegistry? _toolbarRegistry;
 
+  /// Whether the body's scroll view has content above its top edge, i.e.
+  /// under the bar. See [ToolbarEntry.scrolledUnder].
+  bool _scrolledUnder = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -295,8 +299,24 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         // ignore: deprecated_member_use
         visible: TickerMode.of(context) && Visibility.of(context),
         tabBar: _tabBarForChrome,
+        scrolledUnder: _scrolledUnder,
       ),
     );
+  }
+
+  /// Follows the body's outermost vertical scroll view, the way Material's
+  /// `AppBar` tells when it is scrolled under. Nested scroll views (a
+  /// horizontal carousel, the lists inside a tab view) do not count.
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    final scrolledUnder = notification.metrics.extentBefore > 0;
+    if (scrolledUnder != _scrolledUnder) {
+      _scrolledUnder = scrolledUnder;
+      if (_toolbarRegistry != null) _syncToolbarEntry();
+    }
+    return false;
   }
 
   /// Builds the app bar title area, optionally with a subtitle below it.
@@ -371,7 +391,13 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollNotification>(
+        onNotification: _onScrollNotification,
+        child: _buildScaffold(context),
+      );
+
+  Widget _buildScaffold(BuildContext context) {
     final useNativeToolbar = widget.appBar?.useNativeToolbar ?? false;
     final useNativeBottomBar =
         widget.bottomNavigationBar?.useNativeBottomBar ?? true;

@@ -68,6 +68,13 @@ double opacityOf(WidgetTester tester, Finder finder) => tester
 
 Finder get backButton => inBar(find.byType(AdaptiveButton));
 
+/// Opacity the backdrop has for the page that owns the bar.
+double backdropOpacity(WidgetTester tester) => tester
+    .widget<AnimatedOpacity>(
+      find.byKey(const ValueKey<String>('adaptive_toolbar_scroll_edge')),
+    )
+    .opacity;
+
 void main() {
   group('HostedTopToolbar', () {
     testWidgets('one fixed bar at the top shows the page in front', (
@@ -235,6 +242,70 @@ void main() {
       nav.currentState!.pop();
       await tester.pumpAndSettle();
       expect(inBar(find.text('Home')), findsOneWidget);
+    });
+
+    testWidgets('the backdrop only shows while content is under the bar', (
+      tester,
+    ) async {
+      usePhone(tester);
+      await tester.pumpWidget(
+        hostedApp(
+          home: AdaptiveScaffold(
+            appBar: const AdaptiveAppBar(title: 'List', useNativeToolbar: true),
+            body: ListView(
+              children: [
+                for (var i = 0; i < 50; i++)
+                  SizedBox(height: 60, child: Text('row $i')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(backdropOpacity(tester), 0);
+
+      await tester.drag(find.text('row 3'), const Offset(0, -200));
+      await tester.pumpAndSettle();
+      expect(backdropOpacity(tester), 1);
+
+      await tester.drag(find.text('row 6'), const Offset(0, 400));
+      await tester.pumpAndSettle();
+      expect(backdropOpacity(tester), 0);
+    });
+
+    testWidgets('a nested horizontal scroll view leaves the backdrop off', (
+      tester,
+    ) async {
+      usePhone(tester);
+      await tester.pumpWidget(
+        hostedApp(
+          home: AdaptiveScaffold(
+            appBar: const AdaptiveAppBar(
+              title: 'Carousel',
+              useNativeToolbar: true,
+            ),
+            body: ListView(
+              children: [
+                SizedBox(
+                  height: 100,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (var i = 0; i < 20; i++)
+                        SizedBox(width: 100, child: Text('card $i')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.text('card 1'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      expect(backdropOpacity(tester), 0);
     });
 
     testWidgets('on iPhone Duo the top bar keeps the title only', (

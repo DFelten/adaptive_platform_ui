@@ -20,6 +20,7 @@ class ToolbarEntry {
     this.tabBar,
     this.enclosingRoutes = const <ModalRoute<Object?>>[],
     this.titleOverlay,
+    this.scrolledUnder = false,
   });
 
   /// Identifies the registering scaffold instance.
@@ -55,6 +56,11 @@ class ToolbarEntry {
   /// The tab bar the registering scaffold shows, if any. On iPhone Duo the
   /// chrome draws it at the bottom of the trailing bar instead.
   final AdaptiveBottomNavigationBar? tabBar;
+
+  /// Whether the page's content has scrolled under the bar. The chrome only
+  /// draws its backdrop then, like the scroll edge effect of the system bars,
+  /// so content made to be seen at the top (a header image) stays clear.
+  final bool scrolledUnder;
 
   /// Whether the registering scaffold shows a tab bar. Such a scaffold is the
   /// root of a tab layout and never gets an automatic back button.

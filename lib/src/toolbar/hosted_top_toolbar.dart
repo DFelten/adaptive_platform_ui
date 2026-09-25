@@ -23,6 +23,7 @@ class TopToolbarContent {
     this.actions = const <AdaptiveAppBarAction>[],
     this.tint,
     this.navigator,
+    this.scrolledUnder = false,
   });
 
   /// No page owns the chrome, the page has no toolbar, or it draws a
@@ -45,6 +46,7 @@ class TopToolbarContent {
           : appBar.actions ?? const <AdaptiveAppBarAction>[],
       tint: appBar.tintColor,
       navigator: entry.navigator,
+      scrolledUnder: entry.scrolledUnder,
     );
   }
 
@@ -56,6 +58,9 @@ class TopToolbarContent {
   final Widget? customLeading;
   final bool impliesBack;
   final List<AdaptiveAppBarAction> actions;
+
+  /// See [ToolbarEntry.scrolledUnder].
+  final bool scrolledUnder;
   final Color? tint;
   final NavigatorState? navigator;
 
@@ -148,7 +153,19 @@ class HostedTopToolbar extends StatelessWidget {
                   opacity: backdropOpacity,
                   child: titleOnly
                       ? const DuoTitleBackdrop()
-                      : const _Backdrop(),
+                      // Only while content is under the bar, like the scroll
+                      // edge effect of the system bars: at rest the page's
+                      // own top (a header image, say) is not washed out.
+                      : AnimatedOpacity(
+                          key: const ValueKey<String>(
+                            'adaptive_toolbar_scroll_edge',
+                          ),
+                          opacity: (upperOwns ? upper : lower).scrolledUnder
+                              ? 1
+                              : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: const _Backdrop(),
+                        ),
                 ),
                 if (lowerEntry != null && !lower.isEmpty)
                   _layer(
@@ -241,7 +258,9 @@ class _Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    // The app's brightness rather than the system's: an app can force light
+    // or dark, and the backdrop has to match the page underneath.
+    final dark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
     final base = dark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
     return IgnorePointer(
       child: OverflowBox(
